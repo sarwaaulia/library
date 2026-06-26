@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipeUser {
+  tetap
+  guest
+}
+
+enum StatusUser {
+  aktif
+  nonaktif
+}
+
+enum JenisJaminan {
+  ktp
+  uang
+}
+
+enum StatusJaminan {
+  ditahan
+  dikembalikan
+}
+
+enum StatusStokBuku {
+  tersedia
+  dipinjam
+  rusak
+  hilang
+}
+
+enum StatusPeminjaman {
+  dipinjam
+  dikembalikan
+  terlambat
+}
+
+enum StatusBayar {
+  belum
+  lunas
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  nama       String
+  email      String     @unique
+  password   String
+  noHp       String?
+  alamat     String?
+  tipeUser   TipeUser
+  status     StatusUser @default(aktif)
+  createdAt  DateTime   @default(now())
+
+  jaminan    Jaminan[]
+  peminjaman Peminjaman[]
+}
+
+model Jaminan {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
+  jenisJaminan   JenisJaminan
+  noKtp          String?
+  fotoKtp        String?
+  nominalUang    Decimal?      @db.Decimal(12, 2)
+  status         StatusJaminan @default(ditahan)
+  tanggalTerima  DateTime      @default(now())
+  tanggalKembali DateTime?
+}
+
+model KategoriBuku {
+  id           Int          @id @default(autoincrement())
+  namaKategori String
+  masterBuku   MasterBuku[]
+}
+
+model MasterBuku {
+  id          Int           @id @default(autoincrement())
+  judul       String
+  penulis     String
+  penerbit    String?
+  isbn        String?       @unique
+  kategoriId  Int?
+  kategori    KategoriBuku? @relation(fields: [kategoriId], references: [id])
+  tahunTerbit Int?
+  deskripsi   String?
+  coverImage  String?
+
+  stokBuku    StokBuku[]
+}
+
+model StokBuku {
+  id             Int            @id @default(autoincrement())
+  masterBukuId   Int
+  masterBuku     MasterBuku     @relation(fields: [masterBukuId], references: [id])
+  kodeInventaris String         @unique
+  kondisi        String?
+  status         StatusStokBuku @default(tersedia)
+
+  peminjaman     Peminjaman[]
+}
+
+model Peminjaman {
+  id                Int              @id @default(autoincrement())
+  userId            Int
+  user              User             @relation(fields: [userId], references: [id])
+  stokBukuId        Int
+  stokBuku          StokBuku         @relation(fields: [stokBukuId], references: [id])
+  tanggalPinjam     DateTime         @default(now())
+  tanggalJatuhTempo DateTime
+  tanggalKembali    DateTime?
+  status            StatusPeminjaman @default(dipinjam)
+
+  denda             Denda?
+}
+
+model Denda {
+  id              Int         @id @default(autoincrement())
+  peminjamanId    Int         @unique
+  peminjaman      Peminjaman  @relation(fields: [peminjamanId], references: [id])
+  jumlahHariTelat Int
+  tarifPerHari    Decimal     @db.Decimal(10, 2)
+  totalDenda      Decimal     @db.Decimal(12, 2)
+  statusBayar     StatusBayar @default(belum)
+  tanggalBayar    DateTime?
+}

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment variables (JANGAN di-push, ada password DB)
+.env
+.env.local
+
+# Build output
+dist/
+build/
+
+# Prisma generated client (kalau pakai custom output)
+generated/
+
+# Uploads (file user, jangan ikut di-push)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
