@@ -16,28 +16,29 @@ async function main() {
   console.log('Database cleared.');
 
   // Create Users
-  const hashedPassword = await bcrypt.hash('user123', 10);
+  const hashedPasswordAdmin = await bcrypt.hash('admin123', 10);
+  const hashedPasswordUser = await bcrypt.hash('user123', 10);
+  
+  const admin = await prisma.user.create({
+    data: {
+      nama: 'Petugas Perpustakaan (Admin)',
+      email: 'admin@library.com',
+      password: hashedPasswordAdmin,
+      noHp: '081111111111',
+      alamat: 'Kantor Perpustakaan',
+      tipeUser: 'tetap',
+      status: 'aktif'
+    }
+  });
   
   const budi = await prisma.user.create({
     data: {
       nama: 'Budi Santoso',
       email: 'budi@example.com',
-      password: hashedPassword,
+      password: hashedPasswordUser,
       noHp: '081234567890',
       alamat: 'Jl. Merdeka No. 10, Jakarta',
       tipeUser: 'tetap',
-      status: 'aktif'
-    }
-  });
-
-  const agus = await prisma.user.create({
-    data: {
-      nama: 'Agus Tamu',
-      email: 'agus@example.com',
-      password: hashedPassword,
-      noHp: '082345678901',
-      alamat: 'Jl. Mawar No. 5, Bandung',
-      tipeUser: 'guest',
       status: 'aktif'
     }
   });
@@ -99,17 +100,54 @@ async function main() {
 
   console.log('Master books seeded.');
 
-  // Create Stock records (StokBuku)
-  await prisma.stokBuku.createMany({
-    data: [
-      { masterBukuId: laskar.id, kodeInventaris: 'INV-LP-001', status: 'tersedia' },
-      { masterBukuId: laskar.id, kodeInventaris: 'INV-LP-002', status: 'tersedia' },
-      { masterBukuId: bumi.id, kodeInventaris: 'INV-BM-001', status: 'tersedia' },
-      { masterBukuId: coding.id, kodeInventaris: 'INV-CN-001', status: 'tersedia' }
-    ]
+  // Create Stock records (StokBuku) and save references
+  const copy1 = await prisma.stokBuku.create({
+    data: { masterBukuId: laskar.id, kodeInventaris: 'INV-LP-001', status: 'dipinjam' }
+  });
+  const copy2 = await prisma.stokBuku.create({
+    data: { masterBukuId: laskar.id, kodeInventaris: 'INV-LP-002', status: 'tersedia' }
+  });
+  const copy3 = await prisma.stokBuku.create({
+    data: { masterBukuId: bumi.id, kodeInventaris: 'INV-BM-001', status: 'dipinjam' }
+  });
+  const copy4 = await prisma.stokBuku.create({
+    data: { masterBukuId: coding.id, kodeInventaris: 'INV-CN-001', status: 'tersedia' }
   });
 
   console.log('Stock items seeded successfully.');
+
+  // Create active loan transactions
+  const tglPinjam1 = new Date();
+  tglPinjam1.setDate(tglPinjam1.getDate() - 3); // 3 days ago
+  const tglTempo1 = new Date();
+  tglTempo1.setDate(tglTempo1.getDate() + 4); // 4 days remaining
+
+  await prisma.peminjaman.create({
+    data: {
+      userId: budi.id,
+      stokBukuId: copy1.id,
+      tanggalPinjam: tglPinjam1,
+      tanggalJatuhTempo: tglTempo1,
+      status: 'dipinjam'
+    }
+  });
+
+  const tglPinjam2 = new Date();
+  tglPinjam2.setDate(tglPinjam2.getDate() - 10); // 10 days ago
+  const tglTempo2 = new Date();
+  tglTempo2.setDate(tglTempo2.getDate() - 3); // 3 days ago (overdue by 3 days)
+
+  await prisma.peminjaman.create({
+    data: {
+      userId: budi.id,
+      stokBukuId: copy3.id,
+      tanggalPinjam: tglPinjam2,
+      tanggalJatuhTempo: tglTempo2,
+      status: 'dipinjam'
+    }
+  });
+
+  console.log('Active borrow transactions seeded.');
 }
 
 main()

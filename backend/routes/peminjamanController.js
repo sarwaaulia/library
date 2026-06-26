@@ -241,7 +241,7 @@ const borrowBook = async (req, res) => {
 };
 
 const returnBook = async (req, res) => {
-  const { idPeminjaman, tanggalKembali } = req.body;
+  const { idPeminjaman, tanggalKembali, dendaManual } = req.body;
 
   if (!idPeminjaman) {
     return res.status(400).json({ pesan: 'idPeminjaman wajib diisi' });
@@ -264,7 +264,13 @@ const returnBook = async (req, res) => {
     let lateDays = 0;
     let fineAmount = 0;
 
-    if (retDate > dueDate) {
+    if (dendaManual !== undefined && dendaManual !== null && dendaManual !== '') {
+      fineAmount = parseFloat(dendaManual);
+      if (retDate > dueDate) {
+        const diff = Math.abs(retDate - dueDate);
+        lateDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      }
+    } else if (retDate > dueDate) {
       const diff = Math.abs(retDate - dueDate);
       lateDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
       fineAmount = lateDays * 2000;

@@ -70,7 +70,45 @@ const payFine = async (req, res) => {
   }
 };
 
+const createFine = async (req, res) => {
+  const { idPeminjaman, totalDenda, hariTerlambat } = req.body;
+
+  if (!idPeminjaman || totalDenda === undefined || totalDenda === null) {
+    return res.status(400).json({ pesan: 'idPeminjaman dan totalDenda wajib diisi' });
+  }
+
+  try {
+    const existing = await prisma.denda.findUnique({ where: { peminjamanId: parseInt(idPeminjaman) } });
+    if (existing) {
+      await prisma.denda.update({
+        where: { peminjamanId: parseInt(idPeminjaman) },
+        data: {
+          totalDenda: parseFloat(totalDenda),
+          jumlahHariTelat: parseInt(hariTerlambat) || 0
+        }
+      });
+      return res.json({ pesan: 'Denda berhasil diperbarui' });
+    }
+
+    const fine = await prisma.denda.create({
+      data: {
+        peminjamanId: parseInt(idPeminjaman),
+        jumlahHariTelat: parseInt(hariTerlambat) || 0,
+        tarifPerHari: 2000,
+        totalDenda: parseFloat(totalDenda),
+        statusBayar: 'belum'
+      }
+    });
+
+    res.status(201).json({ pesan: 'Denda berhasil dicatat', idDenda: fine.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ pesan: 'Gagal mencatat denda' });
+  }
+};
+
 module.exports = {
   getFines,
-  payFine
+  payFine,
+  createFine
 };
