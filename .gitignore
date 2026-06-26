@@ -1,3 +1,21 @@
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+build/
+*.local
+
+# Environment variables
+.env
+.env.local
+
+# Prisma generated client
+generated/
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # Logs
 logs
 *.log
@@ -7,16 +25,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS files
 .DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
